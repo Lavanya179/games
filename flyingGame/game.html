@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style class="cp-pen-styles">
+            * {
+                margin: 0;
+                padding: 0
+            }
+
+            canvas {
+                background: lightBlue;
+                color: #333
+            }
+
+            body,
+            html {
+                height: 100%;
+                overflow: hidden
+            }
+
+            .navigation-controls {
+                position: fixed;
+                bottom: 60px;
+                right: 0;
+                width: 200px;
+                text-align: center
+            }
+
+            .navigation-controls button {
+                padding: 7px 6px 5px 6px;
+                border: 1px solid #ddd
+            }
+            #game-over-notify {
+                position: fixed;
+                display: none;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.5);
+                align-items: center;
+                justify-content: center;
+                font-family: sans-serif;
+                font-size: 40px;
+                font-weight: bold;
+                color: red;
+                text-align: center;
+            }
+            #game-over-notify .cell{
+                display: table-cell;
+                vertical-align: middle;
+            }
+            #flying {z-index: 9}
+            .gameover{display: none;position: fixed;}
+        </style>
+    </head>
+
+    <body onload="startGame()">
+        <div class="navigation-controls">
+            <button onmousedown="moveCharacter('up')" ontouchstart="moveCharacter('up')">UP</button>
+            <br>
+            <br>
+            <button onmousedown="moveCharacter('left')" onmouseout="mouseup()" ontouchstart="moveCharacter('left')">LEFT</button>
+            <button onmousedown="moveCharacter('right')" onmouseout="mouseup()" ontouchstart="moveCharacter('right')">RIGHT</button>
+            <br>
+            <br>
+            <button onmousedown="moveCharacter('down')" ontouchstart="moveCharacter('down')">DOWN</button>
+        </div>
+        <img src="gameover.png" class="gameover" />
+        <div id="game-over-notify">
+            <div class="cell">Game Over</div>
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script>
+            var imageCollection = {
+                tail: "fairy-tail-flying.png",
+                tailFront: "",
+                back:"fairy-tail-flying-rev.png"
+                
+            }
+            var colors = ['#3C3834', '#FF9E1B', '#A96100', '#477212', '#CF3F6C', '#757575', '#CCA300', '#82203F', '#464646', '#F48950', '#D0520D', '#6E963C', '#D96589', '#919191', '#FFCC00', '#500B73', '#676059', '#FFB149', '#E28200', '#A2CC6E', '#FC8298', '#B9B5B5', '#FFD632', '#CD0529'];
+            
+            var bubbles = [];
+            var bubbleCount = 5;
+            var bubbleSpeed = 3;
+            var popLines = 12;
+            var popDistance = 40;
+            var boundOffset = {
+                x: 100,
+                y: (window.innerHeight - window.innerHeight/2)+27,
+                w:70,
+                h:30
+            };
+            
+            var gameArea = {
+                canvas: document.createElement("canvas"),
+                isDarag: true,
+                randomPick: function(array) {
+                    return array[Math.floor(Math.random() * array.length)];
+                },
+                start: function() {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                    this.context = this.canvas.getContext("2d");
+                    this.frameNo = 0;
+                    document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+                    this.interval = setInterval(updateGameArea, 20);
+                    window.addEventListener('keydown', function(e) {
+                        gameArea.keys = (gameArea.keys || []);
+                        gameArea.keys[e.keyCode] = (e.type == "keydown");
+                    });
+                    window.addEventListener('keyup', function(e) {
+                        gameArea.keys[e.keyCode] = (e.type == "keydown");
+                        toyCharacter.image.src=imageCollection.tail;
+                    });
+                },
+                sprite: function(options) {
+                    var scope = {},
+                        frameIndex = 0,
+                        tickCount = 0;
+                    scope.numberOfFrames = options.numberOfFrames || 1;
+                    scope.ticksPerFrame = options.ticksPerFrame || 0;
+                    scope.image = new Image();
+                    scope.image.src = options.image;
+                    scope.left = options.left;
+                    scope.top = options.top;
+                    scope.width = options.width;
+                    scope.height = options.height;
+                    scope.render = function() {
+                        tickCount += 1;
+                        if (tickCount > scope.ticksPerFrame) {
+                            tickCount = 0;
+                            if (frameIndex < scope.numberOfFrames - 1) {
+                                frameIndex += 1;
+                            } else {
+                                frameIndex = 0;
+                            }
+                        }
+                        options.context.clearRect(0, 0, options.width, options.height);
+                        options.context.drawImage(scope.image, frameIndex * scope.width / scope.numberOfFrames, 0, scope.width / scope.numberOfFrames, scope.height, scope.left, scope.top, scope.width / scope.numberOfFrames, scope.height);
+                    };
+                    return scope;
+                },
+                clear: function() {
+                    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                },
+                stop: function() {
+                    clearInterval(this.interval);
+                }
+            };
+            
+            
+            function rectangle() {
+                gameArea.context.fillStyle = "transparent";
+                gameArea.context.fillRect(boundOffset.x, boundOffset.y, boundOffset.w, boundOffset.h);
+            }
+            var circlePaths = [
+                {"radius":30,"status":"Good","x":window.innerWidth},
+                {"radius":30,"status":"Good","x":window.innerWidth+200},
+                {"radius":30,"status":"danger","x":window.innerWidth+300},
+                {"radius":30,"status":"Good","x":window.innerWidth+100},
+                {"radius":30,"status":"danger","x":window.innerWidth+30}
+            ];
+            
+            var toyCharacter;
+            
+            
+            function activateNumberOfCircles(){
+                //for(var i = 0; i < bubbleCount; i++){
+                    bubbles.push(new createBubble(gameArea.randomPick(circlePaths)));
+               // }
+                setTimeout(function(){activateNumberOfCircles()},4000)
+            }
+            
+            function createBubble(options) {
+                this.context=gameArea.context;
+                this.position = {
+                    x: options.x,
+                    y: Math.random() * window.innerHeight
+                };
+                this.radius = options.radius;
+                this.status = options.status;
+                this.color = gameArea.randomPick(colors);
+                this.lines = [];
+                this.popping = false;
+                for (var i = 0; i < popLines; i++) {
+                    var tempLine = new createLine();
+                    tempLine.bubble = this;
+                    tempLine.index = i;
+                    this.lines.push(tempLine);
+                }
+                this.circle = function() {
+                    if (!this.popping) {
+                        this.context.beginPath();
+                        this.context.lineWidth = 1;
+                        this.context.beginPath();
+                        this.context.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                        this.context.fillStyle=this.color;
+                        this.context.fill();
+                        if(this.status==="danger"){
+                            this.context.strokeStyle="red";
+                            this.context.lineWidth=2;
+                            this.context.stroke();
+                        }
+                        
+                    }
+                    for (var a = 0; a < this.lines.length; a++) {
+                        if (this.lines[a].popping) {
+                            if (this.lines[a].lineLength < popDistance && !this.lines[a].inversePop) {
+                                this.lines[a].popDistance += 0.06;
+                            } else {
+                                if (this.lines[a].popDistance >= 0) {
+                                    this.lines[a].inversePop = true;
+                                    this.lines[a].popDistanceReturn += 1;
+                                    this.lines[a].popDistance -= 0.03;
+                                }
+                            }
+                            this.lines[a].updateValues();
+                            this.lines[a].render();
+                        }
+                    }
+                };
+            };
+            
+            //creates lines when bird collide circles
+            function createLine() {
+                this.lineLength = 0;
+                this.popDistance = 0;
+                this.popDistanceReturn = 0;
+                this.inversePop = false;
+                this.popping = false;
+                this.updateValues = function() {
+                    this.x = this.bubble.position.x + (this.bubble.radius + this.popDistanceReturn) * Math.cos(2 * Math.PI * this.index / this.bubble.lines.length);
+                    this.y = this.bubble.position.y + (this.bubble.radius + this.popDistanceReturn) * Math.sin(2 * Math.PI * this.index / this.bubble.lines.length);
+                    this.lineLength = this.bubble.radius * this.popDistance;
+                    this.endX = this.lineLength;
+                    this.endY = this.lineLength;
+                };
+                this.render = function() {
+                    this.updateValues();
+                    this.bubble.context.beginPath();
+                    this.bubble.context.strokeStyle = this.bubble.color;
+                    this.bubble.context.lineWidth = 2;
+                    this.bubble.context.moveTo(this.x, this.y);
+                    if (this.x < this.bubble.position.x) {
+                        this.endX = this.lineLength * -1;
+                    }
+                    if (this.y < this.bubble.position.y) {
+                        this.endY = this.lineLength * -1;
+                    }
+                    if (this.y === this.bubble.position.y) {
+                        this.endY = 0;
+                    }
+                    if (this.x === this.bubble.position.x) {
+                        this.endX = 0;
+                    }
+                    this.bubble.context.lineTo(this.x + this.endX, this.y + this.endY);
+                    this.bubble.context.stroke();
+                };
+            }
+            
+            //executes every 20 milli seconds
+            function updateGameArea() {
+                if (gameArea.keys && gameArea.keys[37]) {
+                    toyCharacter.left -= 3;
+                    boundOffset.x -= 3;
+                    toyCharacter.image.src=imageCollection.back;
+                }
+                if (gameArea.keys && gameArea.keys[39]) {
+                    toyCharacter.left += 3;
+                    boundOffset.x += 3;
+                    toyCharacter.image.src=imageCollection.tail;
+                }
+                if (gameArea.keys && gameArea.keys[38]) {
+                    toyCharacter.top -= 3;
+                    boundOffset.y -= 3;
+                }
+                if (gameArea.keys && gameArea.keys[40]) {
+                    toyCharacter.top += 3;
+                    boundOffset.y += 3;
+                }
+                
+                gameArea.clear();
+                toyCharacter.render();
+                for (var i = 0; i < bubbles.length; i++) {
+                    if(bubbles[i].status==="danger"){
+                        bubbles[i].position.x -= 4;
+                        bubbles[i].circle();
+                    }else{
+                        bubbles[i].position.x -= bubbleSpeed;
+                        bubbles[i].circle();
+                    }
+                    
+                }
+                for (var i = 0; i < bubbles.length; i++) {
+                    
+                    if(RectCircleColliding(bubbles[i],boundOffset)){
+                        if(bubbles[i].status==="Good"){
+                            for (var a = 0; a < bubbles[i].lines.length; a++) {
+                                popDistance = bubbles[i].radius * 0.5;
+                                bubbles[i].lines[a].popping = true;
+                                bubbles[i].popping = true;
+                            }
+                            toyCharacter.image.src="fairy-tail-power.png";
+                            setTimeout(function(){toyCharacter.image.src="fairy-tail-flying.png";},500);
+                            
+                        }
+                        
+                        console.log(bubbles[i].status);
+                        if(bubbles[i].status==="danger"){
+                            toyCharacter.image.src="";
+                            /*toyCharacter.numberOfFrames=1;
+                            toyCharacter.ticksPerFrame=1;
+                            toyCharacter.width=70;
+                            toyCharacter.height=109;*/
+                            document.getElementById('game-over-notify').style.display = 'table';
+                            $('.gameover').css({
+                                "display":"block",
+                                top:toyCharacter.top,
+                                left:toyCharacter.left+10,
+                                "z-index":"9"
+                            });
+                            setTimeout(function(){
+                                gameArea.stop();
+                                //return;
+                            },30)
+                        }
+                    }
+                }
+                rectangle();
+                
+            }
+            function moveCharacter(dir) {
+                if (dir == "up") {
+                    toyCharacter.top -= 10;
+                    boundOffset.y -= 10;
+                }
+                if (dir == "down") {
+                    toyCharacter.top += 10;
+                    boundOffset.y += 10;
+                }
+                if (dir == "left") {
+                    toyCharacter.left -= 10;
+                    boundOffset.x -= 10;
+                    toyCharacter.image.src=imageCollection.back;
+                }
+                if (dir == "right") {
+                    toyCharacter.left += 10;
+                    boundOffset.x += 10;
+                    toyCharacter.image.src=imageCollection.tail;
+                }
+            }
+            function RectCircleColliding(circle, rect) {
+                var distX = Math.abs(circle.position.x - rect.x - rect.w / 2);
+                var distY = Math.abs(circle.position.y - rect.y - rect.h / 2);
+
+                if (distX > (rect.w / 2 + circle.radius)) {
+                    return false;
+                }
+                if (distY > (rect.h / 2 + circle.radius)) {
+                    return false;
+                }
+
+                if (distX <= (rect.w / 2)) {
+                    return true;
+                }
+                if (distY <= (rect.h / 2)) {
+                    return true;
+                }
+
+                var dx = distX - rect.w / 2;
+                var dy = distY - rect.h / 2;
+                return (dx * dx + dy * dy <= (circle.radius * circle.radius));
+            }
+            
+            function startGame() {
+                document.getElementById('game-over-notify').style.display = 'none';
+                gameArea.start();
+                toyCharacter = gameArea.sprite({
+                    left: 100,
+                    top: (window.innerHeight - window.innerHeight/2),
+                    context: gameArea.context,
+                    width: 400,
+                    height: 90,
+                    image: imageCollection.tail,
+                    numberOfFrames: 5,
+                    ticksPerFrame: 3
+                });
+                activateNumberOfCircles();
+            }
+            
+            gameArea.canvas.addEventListener('mouseup', mouseup);
+
+            function mouseup() {
+               toyCharacter.image.src=imageCollection.tail;
+            }
+            window.addEventListener('resize', function() {
+                gameArea.canvas.width = document.body.clientWidth;
+                gameArea.canvas.height = document.body.clientHeight;
+            });
+        </script>
+    </body>
+
+</html>

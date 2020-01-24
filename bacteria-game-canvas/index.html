@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Strike out game</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="stylesheet" href="css/local.css" type="text/css" charset="utf-8"/>
+    </head>
+    <body>
+    <div id="container" class="noSwipe">
+        <div class="landing-page">
+            <img src="media/images/begin.png" width="1024" height="768" alt="begin">
+            <div class="begin-text text_1 text-shodow">
+                <span class="char1">S</span>
+                <span class="char2">T</span>
+                <span class="char3">R</span>
+                <span class="char4">I</span>
+                <span class="char5">K</span>
+                <span class="char6">E</span>
+                <span class="char7">o</span>
+                <span class="char8">u</span>
+                <span class="char9">t</span>
+                <span class="char10">g</span>
+                <span class="char11">a</span>
+                <span class="char12">m</span>
+                <span class="char13">e</span>
+            </div>
+            <div class="begin-text text_1">
+                <span class="char1">S</span>
+                <span class="char2">T</span>
+                <span class="char3">R</span>
+                <span class="char4">I</span>
+                <span class="char5">K</span>
+                <span class="char6">E</span>
+                <span class="char7">o</span>
+                <span class="char8">u</span>
+                <span class="char9">t</span>
+                <span class="char10">g</span>
+                <span class="char11">a</span>
+                <span class="char12">m</span>
+                <span class="char13">e</span>
+            </div>
+            <div class="begin-text text_2 text-shodow">Bacteria</div>
+            <div class="begin-text text_2">Bacteria</div>
+            <div class="begin-text text_3 text-shodow">Virus</div>
+            <div class="begin-text text_3">Virus</div>
+            <button class="begin">Begin</button>
+        </div>
+        <div class="start-game hide">
+            <div class="strikeout">STRIKE OFF BACTERIA ONLY</div>
+            <canvas id="canvas"></canvas>
+            <div class="time-text">Time: </div>
+            <div class="time-block">
+                <label class="time-label"></label><span id="time">00</span>
+            </div> 
+            <div class="danger-text">Danger zone</div>
+            <div class="svg">
+                <svg width="70" height="70" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <circle id="circle" class="circle_animation" r="30" cy="35" cx="36" stroke-width="8" stroke="#6fdb6f" fill="none"/>
+                    </g>
+                </svg>
+            </div>
+        </div>
+      <!-- Congratulations popup html start -->
+        <div class="popup-container congrats">
+            <div class="content zoom">
+                <p class="strike-text">Strike resistance...</p>
+               <div class="congrats-text">
+                   <div class="bottom">
+                      <span class="char1">C</span>
+                      <span class="char2">o</span>
+                      <span class="char3">n</span>
+                      <span class="char4">g</span>
+                      <span class="char5">r</span>
+                      <span class="char6">a</span>
+                      <span class="char7">t</span>
+                      <span class="char8">u</span>
+                      <span class="char9">l</span>
+                      <span class="char10">a</span>
+                      <span class="char11">t</span>
+                      <span class="char12">i</span>
+                      <span class="char13">o</span>
+                      <span class="char14">n</span>
+                      <span class="char15">s</span>
+                      <span class="char16">!</span>
+                    </div>
+                </div>
+                <button class="replay" id="replay">Replay</button>
+            </div>   
+        </div> 
+      <!--end of Congratulations popup html  -->
+      
+      <!-- Gameover popup html start -->
+        <div class="popup-container gameOver">
+            <div class="content-over zoom">
+               <div class="head-text">
+                   <span class="gB hide">Antibiotic has no role in viral infection</span>
+                   <span class="bB hide">Pathogen invasion!</span>
+                </div>
+               <p class="game-text">GAME OVER!</p>
+               <button class="try-again">Try Again</button>
+            </div>   
+        </div> 
+      <!--end of Gameover popup html  -->  
+     
+        <!-- end of slide html -->
+
+        <!-- mtgsk html -->
+       
+        <!-- end mtgsk html -->
+        
+    </div>
+    <!-- Background settings required for pdf style portrait mode zoom -->
+    
+<!--    <div class="bg" id="bg"><img src="media/images/bg.jpg" height="768"/></div>-->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/local.js"></script>
+    </body>
+</html>
